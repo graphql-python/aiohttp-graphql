@@ -1,5 +1,5 @@
-aiohttp-GraphQL
-=============
+aiohttp-graphql
+===============
 
 Adds [GraphQL] support to your [aiohttp] application.
 

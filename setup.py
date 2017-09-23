@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='aiohttp-GraphQL',
+    name='aiohttp-graphql',
     version='1.0.0',
     description='Adds GraphQL support to your aiohttp application',
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
     url='https://github.com/dfee/aiohttp-graphql',
     download_url='https://github.com/dfee/aiohttp-graphql/releases',
     author='Devin Fee',
