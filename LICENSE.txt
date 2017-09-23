@@ -21,5 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Copyright for portions of project aiohttp-graphql are held by Syrus Akbary, 2015
-as part of project flask-graphql. All other copyright for project aiohttp-graphql
-are held by Devin Fee.
+as part of project flask-graphql, and Sergey Privaev, as part of project
+sanic-graphql. All other copyright for project aiohttp-graphql are held by Devin
+Fee.

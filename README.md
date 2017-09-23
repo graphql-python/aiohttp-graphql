@@ -1,13 +1,9 @@
-aiohttp-graphql
-===============
-
+# aiohttp-graphql
 Adds [GraphQL] support to your [aiohttp] application.
 
-Based on [flask-graphql] by [Syrus Akbary].
+Based on [flask-graphql] by [Syrus Akbary] and [sanic-graphql] by [Sergey Porivaev].
 
-Usage
------
-
+## Usage
 Just use the `GraphQLView` view from `aiohttp_graphql`
 
 ```python
@@ -19,7 +15,21 @@ GraphQLView.attach(app, schema=Schema, graphiql=True)
 GraphQLView.attach(app, schema=Schema, batch=True)
 ```
 
-This will add a `/graphql` endpoint to your app (customizable by passing `route_path='/mypath'` to `GraphQLView.attach`)
+This will add a `/graphql` endpoint to your app (customizable by passing `route_path='/mypath'` to `GraphQLView.attach`).
+
+Note: `GraphQLView.attach` is just a convenience function, and the same functionality can be acheived with
+
+```python
+gql_view = GraphQLView(schema=Schema, **kwargs)
+app.router.add_route('*', gql_view, name='graphql')
+```
+
+It's worth noting that the the "view function" of `GraphQLView` is contained in `GraphQLView.__call__`. So, when you create an instance, that instance is callable with the request object as the sole positional argument. To illustrate:
+
+```python
+gql_view = GraphQLView(schema=Schema, **kwargs)
+gql_view(request)  # <-- the instance is callable and expects a `aiohttp.web.Request` object.
+```
 
 ### Supported options
 -   `schema`: The `GraphQLSchema` object that you want the view to execute when it gets a valid request.
@@ -40,17 +50,32 @@ This will add a `/graphql` endpoint to your app (customizable by passing `route_
 -   `enable_async`: whether `async` mode will be enabled.
 
 
-License
--------
+## Testing
+Testing is done with `pytest`.
 
-Copyright for portions of project [aiohttp-graphql] are held by [Syrus Akbary] as part of project [flask-graphql]. All other claims to this project [aiohttp-graphql] are held by [Devin Fee].
+```bash
+git clone https://github.com/dfee/aiohttp-graphql
+cd aiohttp-graphql
+# Create a virtualenv
+python3.6 -m venv env && source env/bin/activate  # for example
+pip install -e .[test]
+pytest
+```
 
-This project is licensed under MIT License.
+The tests, while modeled after sanic-graphql's tests, have been entirely refactored to take advantage of `pytest-asyncio`, conform with PEP-8, and increase readability with pytest fixtures. For usage tests, please check them out.
+
+
+## License
+Copyright for portions of project [aiohttp-graphql] are held by [Syrus Akbary] as part of project [flask-graphql] and [sanic-graphql] as part of project [Sergey Porivaev]. All other claims to this project [aiohttp-graphql] are held by [Devin Fee].
+
+This project is licensed under the MIT License.
 
   [GraphQL]: http://graphql.org/
   [aiohttp]: https://github.com/aio-libs/aiohttp/
   [flask-graphql]: https://github.com/graphql-python/flask-graphql
+  [sanic-graphql]: https://github.com/graphql-python/sanic-graphql
   [Syrus Akbary]: https://github.com/syrusakbary
+  [Sergey Porivaev]: https://github.com/grazor
   [GraphiQL]: https://github.com/graphql/graphiql
   [graphql-python]: https://github.com/graphql-python/graphql-core
   [Apollo-Client]: http://dev.apollodata.com/core/network.html#query-batching
