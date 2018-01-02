@@ -4,7 +4,7 @@ import re
 from aiohttp import web
 
 
-GRAPHIQL_VERSION = '0.11.10'
+GRAPHIQL_VERSION = '0.11.11'
 
 TEMPLATE = '''<!--
 The request to this GraphQL server provided the header "Accept: text/html"
