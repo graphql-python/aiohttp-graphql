@@ -1,9 +1,10 @@
 from collections import Mapping
-from functools import partial
+from functools import partial, lru_cache
 
 from aiohttp import web
 from promise import Promise
 
+from graphql import Source, parse, validate
 from graphql.type.schema import GraphQLSchema
 from graphql.execution.executors.asyncio import AsyncioExecutor
 from graphql_server import (
@@ -33,6 +34,7 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
             batch=False,
             jinja_env=None,
             max_age=86400,
+            max_cached_queries=128,
             encoder=None,
             error_formatter=None,
             enable_async=True,
@@ -52,6 +54,7 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
         self.batch = batch
         self.jinja_env = jinja_env
         self.max_age = max_age
+        self.parser = self.get_cached_parser(max_cached_queries)
         self.encoder = encoder or json_encode
         self.error_formatter = error_formatter or default_format_error
         self.enable_async = enable_async and isinstance(
@@ -90,6 +93,16 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
             return dict(await request.post())
 
         return {}
+
+    @staticmethod
+    def get_cached_parser(max_cached_queries):
+        @lru_cache(maxsize=max_cached_queries)
+        def cached_parser(query, schema):
+            source = Source(query, name='GraphQL request')
+            ast = parse(source)
+            validation_errors = validate(schema, ast)
+            return ast, validation_errors
+        return cached_parser
 
     def render_graphiql(self, params, result):
         return render_graphiql(
@@ -140,7 +153,8 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
                 root_value=self.root_value,
                 context_value=self.get_context(request),
                 middleware=self.middleware,
-                executor=self.executor,
+                parser=self.parser,
+                executor=self.executor
             )
 
             awaited_execution_results = await Promise.all(execution_results)
