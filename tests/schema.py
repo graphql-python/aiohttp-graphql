@@ -54,7 +54,18 @@ MutationRootType = GraphQLObjectType(
 )
 
 
-Schema = GraphQLSchema(QueryRootType, MutationRootType)
+SubscriptionsRootType = GraphQLObjectType(
+    name='SubscriptionsRoot',
+    fields={
+        'subscriptionsTest': GraphQLField(
+            type=QueryRootType,
+            resolver=lambda *args: QueryRootType
+        )
+    }
+)
+
+
+Schema = GraphQLSchema(QueryRootType, MutationRootType, SubscriptionsRootType)
 
 
 # Schema with async methods

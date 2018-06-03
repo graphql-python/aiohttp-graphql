@@ -1,7 +1,7 @@
 from urllib.parse import urlencode
 
 from aiohttp import web
-import aiohttp.test_utils
+from aiohttp.test_utils import TestClient, TestServer
 from graphql.execution.executors.asyncio import AsyncioExecutor
 import pytest
 
@@ -34,7 +34,7 @@ def app(event_loop, executor, view_kwargs):
 
 @pytest.fixture
 async def client(event_loop, app):
-    client = aiohttp.test_utils.TestClient(app, loop=event_loop)
+    client = TestClient(TestServer(app), loop=event_loop)
     await client.start_server()
     yield client
     await client.close()

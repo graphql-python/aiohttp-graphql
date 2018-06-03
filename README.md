@@ -48,6 +48,7 @@ gql_view(request)  # <-- the instance is callable and expects a `aiohttp.web.Req
 -   `encoder`: the encoder to use for responses (sensibly defaults to `graphql_server.json_encode`)
 -   `error_formatter`: the error formatter to use for responses (sensibly defaults to `graphql_server.default_format_error`)
 -   `enable_async`: whether `async` mode will be enabled.
+-   `subscriptions`: The [GraphiQL] socket endpoint for using subscriptions in [graphql-ws].
 
 
 ## Testing
@@ -81,3 +82,4 @@ This project is licensed under the MIT License.
   [Apollo-Client]: http://dev.apollodata.com/core/network.html#query-batching
   [Devin Fee]: https://github.com/dfee
   [aiohttp-graphql]: https://github.com/dfee/aiohttp-graphql
+  [graphql-ws]: https://github.com/graphql-python/graphql-ws

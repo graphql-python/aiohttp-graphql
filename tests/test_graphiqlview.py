@@ -83,6 +83,18 @@ async def test_graphiql_get_mutation(client, url_builder):
     assert 'response: null' in await response.text()
 
 
+@pytest.mark.asyncio
+async def test_graphiql_get_subscriptions(client, url_builder):
+    response = await client.get(
+        url_builder(query=(
+            'subscription TestSubscriptions { subscriptionsTest { test } }'
+        )),
+        headers={'Accept': 'text/html'},
+    )
+    assert response.status == 200
+    assert 'response: null' in await response.text()
+
+
 class TestAsyncSchema:
     @pytest.fixture
     def executor(self, event_loop):
