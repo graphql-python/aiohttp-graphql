@@ -1,5 +1,6 @@
 from collections import Mapping
 from functools import partial
+import json
 
 from aiohttp import web
 from promise import Promise
@@ -84,10 +85,13 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
                 'application/x-www-form-urlencoded',
                 'multipart/form-data',
             ):
+            data = dict(await request.post())
+            if not data.get("query", None):
+                return json.loads(data['operations'])
             # TODO: seems like a multidict would be more appropriate
             # than casting it and de-duping variables. Alas, it's what
             # graphql-python wants.
-            return dict(await request.post())
+            return data
 
         return {}
 
