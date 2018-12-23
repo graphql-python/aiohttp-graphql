@@ -48,6 +48,7 @@ gql_view(request)  # <-- the instance is callable and expects a `aiohttp.web.Req
 -   `encoder`: the encoder to use for responses (sensibly defaults to `graphql_server.json_encode`)
 -   `error_formatter`: the error formatter to use for responses (sensibly defaults to `graphql_server.default_format_error`)
 -   `enable_async`: whether `async` mode will be enabled.
+-   `backend`: the backend to be used to create `GraphQLDocument` from a string (sensibly defaults to `graphql.backend.core.GraphQLCoreBackend`).
 
 
 ## Testing
