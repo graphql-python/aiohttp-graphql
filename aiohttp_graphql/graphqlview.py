@@ -202,4 +202,11 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
     def attach(cls, app, *, route_path='/graphql', route_name='graphql',
                **kwargs):
         view = cls(**kwargs)
-        app.router.add_route('*', route_path, view, name=route_name)
+        #app.router.add_route('*', route_path, view, name=route_name)
+        app.router.add_route('GET', route_path, view, name=route_name)
+        app.router.add_route('POST', route_path, view, name=route_name)
+        app.router.add_route('PUT', route_path, view, name=route_name)
+        app.router.add_route('DELETE', route_path, view, name=route_name)
+        app.router.add_route('PATCH', route_path, view, name=route_name)
+        app.router.add_route('HEAD', route_path, view, name=route_name)
+        #app.router.add_route('OPTIONS', route_path, view, name=route_name)
