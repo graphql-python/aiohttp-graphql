@@ -203,10 +203,5 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
                **kwargs):
         view = cls(**kwargs)
         #app.router.add_route('*', route_path, view, name=route_name)
-        app.router.add_route('GET', route_path, view, name=route_name)
-        app.router.add_route('POST', route_path, view, name=route_name)
-        app.router.add_route('PUT', route_path, view, name=route_name)
-        app.router.add_route('DELETE', route_path, view, name=route_name)
-        app.router.add_route('PATCH', route_path, view, name=route_name)
-        app.router.add_route('HEAD', route_path, view, name=route_name)
-        #app.router.add_route('OPTIONS', route_path, view, name=route_name)
+        for method in ('GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'):  # no OPTIONS
+            app.router.add_route(method, route_path, view, name=route_name)
