@@ -36,6 +36,7 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
             encoder=None,
             error_formatter=None,
             enable_async=True,
+            **execution_options,
         ):
         # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
@@ -58,6 +59,7 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
             self.executor,
             AsyncioExecutor,
         )
+        self.execution_options = execution_options
         assert isinstance(self.schema, GraphQLSchema), \
             'A Schema is required to be provided to GraphQLView.'
 
@@ -141,6 +143,7 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
                 context_value=self.get_context(request),
                 middleware=self.middleware,
                 executor=self.executor,
+                **self.execution_options,
             )
 
             awaited_execution_results = await Promise.all(execution_results)
