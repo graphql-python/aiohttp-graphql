@@ -5,10 +5,9 @@ from aiohttp import web
 from promise import Promise
 
 from graphql.type.schema import GraphQLSchema
-from graphql.execution.executors.asyncio import AsyncioExecutor
+from graphql import format_error as default_format_error
 from graphql_server import (
     HttpQueryError,
-    default_format_error,
     encode_execution_results,
     json_encode,
     load_json_body,
@@ -22,7 +21,6 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
     def __init__(
             self,
             schema=None,
-            executor=None,
             root_value=None,
             context=None,
             pretty=False,
@@ -35,13 +33,12 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
             max_age=86400,
             encoder=None,
             error_formatter=None,
-            enable_async=True,
+            field_resolver=None,
         ):
         # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
 
         self.schema = schema
-        self.executor = executor
         self.root_value = root_value
         self.context = context
         self.pretty = pretty
@@ -54,10 +51,7 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
         self.max_age = max_age
         self.encoder = encoder or json_encode
         self.error_formatter = error_formatter or default_format_error
-        self.enable_async = enable_async and isinstance(
-            self.executor,
-            AsyncioExecutor,
-        )
+        self.field_resolver = field_resolver
         assert isinstance(self.schema, GraphQLSchema), \
             'A Schema is required to be provided to GraphQLView.'
 
@@ -136,11 +130,10 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
                 batch_enabled=self.batch,
                 catch=is_graphiql,
                 # Execute options
-                return_promise=self.enable_async,
                 root_value=self.root_value,
                 context_value=self.get_context(request),
                 middleware=self.middleware,
-                executor=self.executor,
+                field_resolver=self.field_resolver,
             )
 
             awaited_execution_results = await Promise.all(execution_results)
