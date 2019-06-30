@@ -22,11 +22,12 @@ setup(
     packages=find_packages(exclude=['tests']),
     install_requires=[
         'graphql-core-next',
-        'aiohttp>=2.0.0',
+        'aiohttp>=4.0.0a',
         'pytest-runner',
+        'graphql-server-core',
     ],
     dependency_links=[
-        'https://github.com/x0y-gt/graphql-server-core/tree/master#egg=graphql-server-core-1.1'
+        'git+https://github.com/x0y-gt/graphql-server-core#egg=graphql-server-core-1.1'
     ],
     extras_require={
         'test': [
