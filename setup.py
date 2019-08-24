@@ -24,7 +24,7 @@ setup(
         'graphql-core-next',
         'aiohttp>=4.0.0a',
         'pytest-runner',
-        'graphql-server-core==1.1 @ git+https://github.com/x0y-gt/graphql-server-core#egg=graphql-server-core-1.1',
+        'graphql-server-core@https://github.com/x0y-gt/graphql-server-core#egg=graphql-server-core-1.1',
         'promise',
         'asyncio',
     ],
