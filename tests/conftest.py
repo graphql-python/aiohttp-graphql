@@ -26,15 +26,15 @@ def view_kwargs():
 
 # aiohttp Fixtures
 @pytest.fixture
-def app(event_loop, executor, view_kwargs):
-    app = web.Application(loop=event_loop)
+def app(executor, view_kwargs):
+    app = web.Application()
     GraphQLView.attach(app, executor=executor, **view_kwargs)
     return app
 
 
 @pytest.fixture
 async def client(event_loop, app):
-    client = aiohttp.test_utils.TestClient(app, loop=event_loop)
+    client = aiohttp.test_utils.TestClient(aiohttp.test_utils.TestServer(app), loop=event_loop)
     await client.start_server()
     yield client
     await client.close()

@@ -202,4 +202,15 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
     def attach(cls, app, *, route_path='/graphql', route_name='graphql',
                **kwargs):
         view = cls(**kwargs)
-        app.router.add_route('*', route_path, view, name=route_name)
+        app.router.add_route('*', route_path, _asyncify(view), name=route_name)
+
+
+def _asyncify(handler):
+    """
+    This is mainly here because ``aiohttp`` can't infer the async definition of
+    :py:meth:`.GraphQLView.__call__` and raises a :py:class:`DeprecationWarning`
+    in tests. Wrapping it into an async function avoids the noisy warning.
+    """
+    async def _dispatch(request):
+        return await handler(request)
+    return _dispatch
