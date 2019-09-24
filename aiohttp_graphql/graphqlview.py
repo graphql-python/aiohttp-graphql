@@ -164,12 +164,6 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
             )
 
         except HttpQueryError as err:
-            if err.headers and 'Allow' in err.headers:
-                # bug in graphql_server.execute_graphql_request
-                # https://github.com/graphql-python/graphql-server-core/pull/4
-                if isinstance(err.headers['Allow'], list):
-                    err.headers['Allow'] = ', '.join(err.headers['Allow'])
-
             return web.Response(
                 text=self.encoder({
                     'errors': [self.error_formatter(err)]
