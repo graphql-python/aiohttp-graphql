@@ -11,8 +11,8 @@ cache:
   - $HOME/.cache/pip
 install:
 - pip install -e .[test]
-- pip install pytest-cov coveralls
+- pip install pytest-cov codecov
 script:
 - python -m pytest --cov-branch --cov=aiohttp_graphql --cov-report=term-missing
 after_success:
-- coveralls
+- codecov
