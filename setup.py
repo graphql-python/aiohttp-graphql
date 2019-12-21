@@ -22,7 +22,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     install_requires=[
         'graphql-core>=2.0.dev,<3',
-        'graphql-server-core>=1.0.dev,<2',
+        'graphql-server-core>=1.0.dev,<=1.1.1',
         'aiohttp>=2.0.0',
         'pytest-runner',
     ],
