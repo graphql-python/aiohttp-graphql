@@ -17,7 +17,7 @@ GraphQLView.attach(app, schema=Schema, batch=True)
 
 This will add a `/graphql` endpoint to your app (customizable by passing `route_path='/mypath'` to `GraphQLView.attach`).
 
-Note: `GraphQLView.attach` is just a convenience function, and the same functionality can be acheived with
+Note: `GraphQLView.attach` is just a convenience function, and the same functionality can be achieved with
 
 ```python
 gql_view = GraphQLView(schema=Schema, **kwargs)
@@ -54,7 +54,7 @@ gql_view(request)  # <-- the instance is callable and expects a `aiohttp.web.Req
 Testing is done with `pytest`.
 
 ```bash
-git clone https://github.com/dfee/aiohttp-graphql
+git clone https://github.com/graphql-python/aiohttp-graphql
 cd aiohttp-graphql
 # Create a virtualenv
 python3.6 -m venv env && source env/bin/activate  # for example
@@ -80,4 +80,4 @@ This project is licensed under the MIT License.
   [graphql-python]: https://github.com/graphql-python/graphql-core
   [Apollo-Client]: http://dev.apollodata.com/core/network.html#query-batching
   [Devin Fee]: https://github.com/dfee
-  [aiohttp-graphql]: https://github.com/dfee/aiohttp-graphql
+  [aiohttp-graphql]: https://github.com/graphql-python/aiohttp-graphql
