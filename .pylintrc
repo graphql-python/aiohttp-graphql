@@ -67,6 +67,7 @@ confidence=
 # --disable=W"
 disable=
     fixme,
+    bad-continuation,
     missing-docstring,
     too-few-public-methods,
 

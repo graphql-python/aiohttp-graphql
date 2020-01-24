@@ -12,7 +12,7 @@ from aiohttp_graphql import GraphQLView
 
 
 # GraphQL Fixtures
-@pytest.fixture(params=[True, False], ids=['async', 'sync'])
+@pytest.fixture(params=[True, False], ids=["async", "sync"])
 def executor(request):
     if request.param:
         return AsyncioExecutor()
@@ -44,13 +44,14 @@ async def client(app):
 # URL Fixtures
 @pytest.fixture
 def base_url():
-    return '/graphql'
+    return "/graphql"
 
 
 @pytest.fixture
 def url_builder(base_url):
     def builder(**url_params):
         if url_params:
-            return '{}?{}'.format(base_url, urlencode(url_params))
+            return "{}?{}".format(base_url, urlencode(url_params))
         return base_url
+
     return builder
