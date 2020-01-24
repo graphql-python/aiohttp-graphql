@@ -102,6 +102,7 @@ async def test_errors_when_missing_operation_name(client, url_builder):
             query="""
         query TestQuery { test }
         mutation TestMutation { writeTest { test } }
+        subscription TestSubscriptions { subscriptionsTest { test } }
         """
         )
     )
@@ -157,6 +158,31 @@ async def test_errors_when_selecting_a_mutation_within_a_get(client, url_builder
 
 
 @pytest.mark.asyncio
+async def test_errors_when_selecting_a_subscription_within_a_get(
+    client, url_builder,
+):
+    response = await client.get(
+        url_builder(
+            query="""
+        subscription TestSubscriptions { subscriptionsTest { test } }
+        """,
+            operationName="TestSubscriptions",
+        )
+    )
+
+    assert response.status == 405
+    assert await response.json() == {
+        "errors": [
+            {
+                "message": (
+                    "Can only perform a subscription operation from a POST " "request."
+                )
+            },
+        ],
+    }
+
+
+@pytest.mark.asyncio
 async def test_allows_mutation_to_exist_within_a_get(client, url_builder):
     response = await client.get(
         url_builder(
@@ -194,6 +220,33 @@ async def test_allows_sending_a_mutation_via_post(client, base_url):
 
     assert response.status == 200
     assert await response.json() == {"data": {"writeTest": {"test": "Hello World"}}}
+
+
+@pytest.mark.asyncio
+async def test_errors_when_sending_a_subscription_without_allow(client, base_url):
+    response = await client.post(
+        base_url,
+        data=json.dumps(
+            dict(
+                query="""
+            subscription TestSubscriptions { subscriptionsTest { test } }
+            """,
+            )
+        ),
+        headers={"content-type": "application/json"},
+    )
+
+    assert response.status == 200
+    assert await response.json() == {
+        "data": None,
+        "errors": [
+            {
+                "message": "Subscriptions are not allowed. You will need to "
+                "either use the subscribe function or pass "
+                "allow_subscriptions=True"
+            },
+        ],
+    }
 
 
 @pytest.mark.asyncio

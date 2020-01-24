@@ -35,6 +35,7 @@ class GraphQLView:  # pylint: disable = too-many-instance-attributes
         encoder=None,
         error_formatter=None,
         enable_async=True,
+        subscriptions=None,
         **execution_options,
     ):
         # pylint: disable=too-many-arguments
@@ -55,6 +56,7 @@ class GraphQLView:  # pylint: disable = too-many-instance-attributes
         self.encoder = encoder or json_encode
         self.error_formatter = error_formatter or default_format_error
         self.enable_async = enable_async and isinstance(self.executor, AsyncioExecutor)
+        self.subscriptions = subscriptions
         self.execution_options = execution_options
         assert isinstance(
             self.schema, GraphQLSchema
@@ -97,6 +99,7 @@ class GraphQLView:  # pylint: disable = too-many-instance-attributes
             result=result,
             graphiql_version=self.graphiql_version,
             graphiql_template=self.graphiql_template,
+            subscriptions=self.subscriptions,
         )
 
     def is_graphiql(self, request):

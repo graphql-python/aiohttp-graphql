@@ -29,6 +29,8 @@ add "&raw" to the end of the URL within a browser.
   <script src="//cdn.jsdelivr.net/npm/react@16.12.0/umd/react.production.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/react-dom@16.12.0/umd/react-dom.production.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/graphiql@{{graphiql_version}}/graphiql.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/subscriptions-transport-ws@0.9.16/browser/client.js"></script>
+  <script src="//cdn.jsdelivr.net//npm/graphiql-subscriptions-fetcher@0.0.2/browser/client.js"></script>
 </head>
 <body>
   <script>
@@ -63,6 +65,20 @@ add "&raw" to the end of the URL within a browser.
         otherParams[k] = parameters[k];
       }
     }
+
+    var subscriptionsFetcher;
+    if ('{{subscriptions}}') {
+      const subscriptionsClient = new SubscriptionsTransportWs.SubscriptionClient(
+        '{{ subscriptions }}',
+        {reconnect: true}
+      );
+
+      subscriptionsFetcher = GraphiQLSubscriptionsFetcher.graphQLFetcher(
+        subscriptionsClient,
+        graphQLFetcher
+      );
+    }
+
     var fetchURL = locationQuery(otherParams);
 
     // Defines a GraphQL fetcher using the fetch API.
@@ -110,7 +126,7 @@ add "&raw" to the end of the URL within a browser.
     // Render <GraphiQL /> into the body.
     ReactDOM.render(
       React.createElement(GraphiQL, {
-        fetcher: graphQLFetcher,
+        fetcher: subscriptionsFetcher || graphQLFetcher,
         onEditQuery: onEditQuery,
         onEditVariables: onEditVariables,
         onEditOperationName: onEditOperationName,
@@ -149,7 +165,7 @@ def process_var(template, name, value, jsonify=False):
 
 
 def simple_renderer(template, **values):
-    replace = ["graphiql_version"]
+    replace = ["graphiql_version", "subscriptions"]
     replace_jsonify = ["query", "result", "variables", "operation_name"]
 
     for rep in replace:
@@ -167,6 +183,7 @@ async def render_graphiql(
     graphiql_template=None,
     params=None,
     result=None,
+    subscriptions=None,
 ):
     graphiql_version = graphiql_version or GRAPHIQL_VERSION
     template = graphiql_template or TEMPLATE
@@ -176,6 +193,7 @@ async def render_graphiql(
         "variables": params and params.variables,
         "operation_name": params and params.operation_name,
         "result": result,
+        "subscriptions": subscriptions or "",
     }
 
     if jinja_env:
