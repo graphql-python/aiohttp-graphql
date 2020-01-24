@@ -131,7 +131,7 @@ def escape_js_value(value):
     quotation = False
     if value.startswith('"') and value.endswith('"'):
         quotation = True
-        value = value[1:len(value)-1]
+        value = value[1:-1]
 
     value = value.replace('\\\\n', '\\\\\\n').replace('\\n', '\\\\n')
     if quotation:
@@ -167,8 +167,7 @@ async def render_graphiql(
         graphiql_version=None,
         graphiql_template=None,
         params=None,
-        result=None,
-    ):
+        result=None):
     graphiql_version = graphiql_version or GRAPHIQL_VERSION
     template = graphiql_template or TEMPLATE
     template_vars = {

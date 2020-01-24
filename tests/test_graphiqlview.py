@@ -1,5 +1,7 @@
 from graphql.execution.executors.asyncio import AsyncioExecutor
+
 from jinja2 import Environment
+
 import pytest
 
 from .schema import (
@@ -28,6 +30,7 @@ def view_kwargs():
         'schema': Schema,
         'graphiql': True,
     }
+
 
 @pytest.mark.asyncio
 async def test_graphiql_is_enabled(client, base_url):

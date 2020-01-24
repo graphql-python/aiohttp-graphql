@@ -1,19 +1,12 @@
 import json
 
-try:
-    from urllib import urlencode
-except ImportError:
-    from urllib.parse import urlencode
+from urllib.parse import urlencode
 
-try:
-    from aiohttp.helpers import FormData
-except ImportError:
-    from aiohttp.formdata import FormData
-
-from graphql.execution.executors.asyncio import AsyncioExecutor
-from graphql.execution.executors.sync import SyncExecutor
 import pytest
 
+from aiohttp import FormData
+from graphql.execution.executors.asyncio import AsyncioExecutor
+from graphql.execution.executors.sync import SyncExecutor
 from aiohttp_graphql import GraphQLView
 
 from .schema import Schema, AsyncSchema
@@ -265,8 +258,7 @@ async def test_supports_post_json_query_with_json_variables(client, base_url):
 
 @pytest.mark.asyncio
 async def test_supports_post_url_encoded_query_with_string_variables(
-        client, base_url,
-    ):
+        client, base_url):
     response = await client.post(
         base_url,
         data=urlencode(
@@ -286,8 +278,7 @@ async def test_supports_post_url_encoded_query_with_string_variables(
 
 @pytest.mark.asyncio
 async def test_supports_post_json_quey_with_get_variable_values(
-        client, url_builder,
-    ):
+        client, url_builder):
     response = await client.post(
         url_builder(variables=json.dumps({'who': "Dolly"})),
         data=json.dumps(dict(
@@ -304,8 +295,7 @@ async def test_supports_post_json_quey_with_get_variable_values(
 
 @pytest.mark.asyncio
 async def test_post_url_encoded_query_with_get_variable_values(
-        client, url_builder,
-    ):
+        client, url_builder):
     response = await client.post(
         url_builder(variables=json.dumps({'who': "Dolly"})),
         data=urlencode(
@@ -324,8 +314,7 @@ async def test_post_url_encoded_query_with_get_variable_values(
 
 @pytest.mark.asyncio
 async def test_supports_post_raw_text_query_with_get_variable_values(
-        client, url_builder,
-    ):
+        client, url_builder):
     response = await client.post(
         url_builder(variables=json.dumps({'who': "Dolly"})),
         data='query helloWho($who: String){ test(who: $who) }',
@@ -432,7 +421,9 @@ async def test_handles_field_errors_caught_by_graphql(client, url_builder):
     assert await response.json() == {
         'data': None,
         'errors': [
-            {'locations': [{'column': 2, 'line': 1}], 'message': 'Throws!'},
+            {
+                'locations': [{'column': 2, 'line': 1}], 'message': 'Throws!',
+                'path': ['thrower']}
         ],
     }
 
@@ -447,7 +438,7 @@ async def test_handles_syntax_errors_caught_by_graphql(client, url_builder):
             {
                 'locations': [{'column': 1, 'line': 1}],
                 'message': (
-                    'Syntax Error GraphQL request (1:1) '
+                    'Syntax Error GraphQL (1:1) '
                     'Unexpected Name "syntaxerror"\n\n1: syntaxerror\n   ^\n'
                 ),
             },
@@ -566,17 +557,18 @@ async def test_post_multipart_data(client, base_url):
     # pylint: disable=line-too-long
     query = 'mutation TestMutation { writeTest { test } }'
 
-    data = ('------aiohttpgraphql\r\n' +
-            'Content-Disposition: form-data; name="query"\r\n' +
-            '\r\n' +
-            query + '\r\n' +
-            '------aiohttpgraphql--\r\n' +
-            'Content-Type: text/plain; charset=utf-8\r\n' +
-            'Content-Disposition: form-data; name="file"; filename="text1.txt"; filename*=utf-8\'\'text1.txt\r\n' +
-            '\r\n' +
-            '\r\n' +
-            '------aiohttpgraphql--\r\n'
-           )
+    data = (
+        '------aiohttpgraphql\r\n' +
+        'Content-Disposition: form-data; name="query"\r\n' +
+        '\r\n' +
+        query + '\r\n' +
+        '------aiohttpgraphql--\r\n' +
+        'Content-Type: text/plain; charset=utf-8\r\n' +
+        'Content-Disposition: form-data; name="file"; filename="text1.txt"; filename*=utf-8\'\'text1.txt\r\n' +
+        '\r\n' +
+        '\r\n' +
+        '------aiohttpgraphql--\r\n'
+    )
 
     response = await client.post(
         base_url,
@@ -613,7 +605,6 @@ class TestBatchExecutor:
             'data': {'test': "Hello World"},
         }]
 
-
     @pytest.mark.asyncio
     async def test_batch_supports_post_json_query_with_json_variables(
             self, client, base_url):
@@ -631,7 +622,6 @@ class TestBatchExecutor:
         assert await response.json() == [{
             'data': {'test': "Hello Dolly"},
         }]
-
 
     @pytest.mark.asyncio
     async def test_batch_allows_post_with_operation_name(

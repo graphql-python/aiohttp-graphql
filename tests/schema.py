@@ -25,9 +25,9 @@ QueryRootType = GraphQLObjectType(
         ),
         'request': GraphQLField(
             GraphQLNonNull(GraphQLString),
-            resolver=lambda obj, info, *args: \
-                info.context['request'].query.get('q'),
-            ),
+            resolver=lambda obj, info, *args:
+            info.context['request'].query.get('q'),
+        ),
         'context': GraphQLField(
             GraphQLNonNull(GraphQLString),
             resolver=lambda obj, info, *args: info.context,
@@ -35,9 +35,8 @@ QueryRootType = GraphQLObjectType(
         'test': GraphQLField(
             type=GraphQLString,
             args={'who': GraphQLArgument(GraphQLString)},
-            # resolver=lambda obj, args, context, info: \
-            resolver=lambda obj, info, **args: \
-                'Hello %s' % (args.get('who') or 'World'),
+            resolver=lambda obj, info, **args:
+            'Hello %s' % (args.get('who') or 'World'),
         ),
     },
 )
@@ -63,10 +62,12 @@ async def resolver(context, *args):
     await asyncio.sleep(0.001)
     return 'hey'
 
+
 async def resolver_2(context, *args):
     # pylint: disable=unused-argument
     await asyncio.sleep(0.003)
     return 'hey2'
+
 
 def resolver_3(context, *args):
     # pylint: disable=unused-argument

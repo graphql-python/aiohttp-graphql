@@ -1,9 +1,8 @@
-from collections import Mapping
+from collections.abc import Mapping
 from functools import partial
 
-from aiohttp import web
 from promise import Promise
-
+from aiohttp import web
 from graphql.type.schema import GraphQLSchema
 from graphql.execution.executors.asyncio import AsyncioExecutor
 from graphql_server import (
@@ -18,7 +17,7 @@ from graphql_server import (
 from .render_graphiql import render_graphiql
 
 
-class GraphQLView: # pylint: disable = too-many-instance-attributes
+class GraphQLView:  # pylint: disable = too-many-instance-attributes
     def __init__(
             self,
             schema=None,
@@ -35,8 +34,7 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
             max_age=86400,
             encoder=None,
             error_formatter=None,
-            enable_async=True,
-        ):
+            enable_async=True):
         # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
 
@@ -55,9 +53,7 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
         self.encoder = encoder or json_encode
         self.error_formatter = error_formatter or default_format_error
         self.enable_async = enable_async and isinstance(
-            self.executor,
-            AsyncioExecutor,
-        )
+            self.executor, AsyncioExecutor)
         assert isinstance(self.schema, GraphQLSchema), \
             'A Schema is required to be provided to GraphQLView.'
 
@@ -76,14 +72,13 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
             r_text = await request.text()
             return {'query': r_text}
 
-        elif request.content_type == 'application/json':
+        if request.content_type == 'application/json':
             text = await request.text()
             return load_json_body(text)
 
-        elif request.content_type in (
+        if request.content_type in (
                 'application/x-www-form-urlencoded',
-                'multipart/form-data',
-            ):
+                'multipart/form-data'):
             # TODO: seems like a multidict would be more appropriate
             # than casting it and de-duping variables. Alas, it's what
             # graphql-python wants.
@@ -143,6 +138,11 @@ class GraphQLView: # pylint: disable = too-many-instance-attributes
                 executor=self.executor,
             )
 
+            if is_graphiql and self.enable_async:
+                # catch errors like run_http_query does when async
+                execution_results = [
+                    result.catch(lambda value: None)
+                    for result in execution_results]
             awaited_execution_results = await Promise.all(execution_results)
             result, status_code = encode_execution_results(
                 awaited_execution_results,
