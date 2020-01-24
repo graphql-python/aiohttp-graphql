@@ -4,8 +4,8 @@ Adds [GraphQL] support to your [aiohttp] application.
 Based on [flask-graphql] by [Syrus Akbary] and [sanic-graphql] by [Sergey Porivaev].
 
 [![PyPI version](https://badge.fury.io/py/aiohttp-graphql.svg)](https://badge.fury.io/py/aiohttp-graphql)
-[![Build Status](https://github.com/graphql-python/aiohttp-graphql.svg?branch=master)](https://github.com/graphql-python/aiohttp-graphql)
-[![Coverage Status](https://github.com/graphql-python/aiohttp-graphql/branch/master/graph/badge.svg)](https://github.com/graphql-python/aiohttp-graphql)
+[![Build Status](https://travis-ci.com/graphql-python/aiohttp-graphql.svg?branch=master)](https://github.com/graphql-python/aiohttp-graphql)
+[![Coverage Status](https://codecov.io/gh/graphql-python/aiohttp-graphql/branch/master/graph/badge.svg)](https://github.com/graphql-python/aiohttp-graphql)
 
 ## Usage
 Just use the `GraphQLView` view from `aiohttp_graphql`
