@@ -39,7 +39,6 @@ class GraphQLView:  # pylint: disable = too-many-instance-attributes
         **execution_options,
     ):
         # pylint: disable=too-many-arguments
-        # pylint: disable=too-many-locals
 
         self.schema = schema
         self.executor = executor
