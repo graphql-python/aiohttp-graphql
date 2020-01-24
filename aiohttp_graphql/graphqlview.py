@@ -163,12 +163,6 @@ class GraphQLView:  # pylint: disable = too-many-instance-attributes
             )
 
         except HttpQueryError as err:
-            if err.headers and "Allow" in err.headers:
-                # bug in graphql_server.execute_graphql_request
-                # https://github.com/graphql-python/graphql-server-core/pull/4
-                if isinstance(err.headers["Allow"], list):
-                    err.headers["Allow"] = ", ".join(err.headers["Allow"])
-
             return web.Response(
                 text=self.encoder({"errors": [self.error_formatter(err)]}),
                 status=err.status_code,
@@ -198,4 +192,18 @@ class GraphQLView:  # pylint: disable = too-many-instance-attributes
     @classmethod
     def attach(cls, app, *, route_path="/graphql", route_name="graphql", **kwargs):
         view = cls(**kwargs)
-        app.router.add_route("*", route_path, view, name=route_name)
+        app.router.add_route("*", route_path, _asyncify(view), name=route_name)
+
+
+def _asyncify(handler):
+    """Return an async version of the given handler.
+
+    This is mainly here because ``aiohttp`` can't infer the async definition of
+    :py:meth:`.GraphQLView.__call__` and raises a :py:class:`DeprecationWarning`
+    in tests. Wrapping it into an async function avoids the noisy warning.
+    """
+
+    async def _dispatch(request):
+        return await handler(request)
+
+    return _dispatch

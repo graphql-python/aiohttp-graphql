@@ -486,12 +486,18 @@ async def test_passes_request_into_request_context(client, url_builder):
 
 class TestCustomContext:
     @pytest.fixture
-    def view_kwargs(self, view_kwargs):
+    def view_kwargs(self, request, view_kwargs):
         # pylint: disable=no-self-use
         # pylint: disable=redefined-outer-name
-        view_kwargs.update(context="CUSTOM CONTEXT")
+        view_kwargs.update(context=request.param)
         return view_kwargs
 
+    @pytest.mark.parametrize(
+        "view_kwargs",
+        ["CUSTOM CONTEXT", {"CUSTOM_CONTEXT": "test"}],
+        indirect=True,
+        ids=repr,
+    )
     @pytest.mark.asyncio
     async def test_context_remapped(self, client, url_builder):
         response = await client.get(url_builder(query="{context}"))
@@ -500,6 +506,18 @@ class TestCustomContext:
         assert response.status == 200
         assert "request" in _json["data"]["context"]
         assert "CUSTOM CONTEXT" not in _json["data"]["context"]
+
+    @pytest.mark.parametrize(
+        "view_kwargs", [{"request": "test"}], indirect=True, ids=repr
+    )
+    @pytest.mark.asyncio
+    async def test_request_not_replaced(self, client, url_builder):
+        response = await client.get(url_builder(query="{context}"))
+
+        _json = await response.json()
+        assert response.status == 200
+        assert "request" in _json["data"]["context"]
+        assert _json["data"]["context"] == str({"request": "test"})
 
 
 @pytest.mark.asyncio
