@@ -3,6 +3,10 @@ Adds [GraphQL] support to your [aiohttp] application.
 
 Based on [flask-graphql] by [Syrus Akbary] and [sanic-graphql] by [Sergey Porivaev].
 
+[![PyPI version](https://badge.fury.io/py/aiohttp-graphql.svg)](https://badge.fury.io/py/aiohttp-graphql)
+[![Build Status](https://travis-ci.com/graphql-python/aiohttp-graphql.svg?branch=master)](https://github.com/graphql-python/aiohttp-graphql)
+[![Coverage Status](https://codecov.io/gh/graphql-python/aiohttp-graphql/branch/master/graph/badge.svg)](https://github.com/graphql-python/aiohttp-graphql)
+
 ## Usage
 Just use the `GraphQLView` view from `aiohttp_graphql`
 
@@ -17,7 +21,7 @@ GraphQLView.attach(app, schema=Schema, batch=True)
 
 This will add a `/graphql` endpoint to your app (customizable by passing `route_path='/mypath'` to `GraphQLView.attach`).
 
-Note: `GraphQLView.attach` is just a convenience function, and the same functionality can be acheived with
+Note: `GraphQLView.attach` is just a convenience function, and the same functionality can be achieved with
 
 ```python
 gql_view = GraphQLView(schema=Schema, **kwargs)
@@ -48,13 +52,14 @@ gql_view(request)  # <-- the instance is callable and expects a `aiohttp.web.Req
 -   `encoder`: the encoder to use for responses (sensibly defaults to `graphql_server.json_encode`)
 -   `error_formatter`: the error formatter to use for responses (sensibly defaults to `graphql_server.default_format_error`)
 -   `enable_async`: whether `async` mode will be enabled.
+-   `subscriptions`: The [GraphiQL] socket endpoint for using subscriptions in [graphql-ws].
 
 
 ## Testing
 Testing is done with `pytest`.
 
 ```bash
-git clone https://github.com/dfee/aiohttp-graphql
+git clone https://github.com/graphql-python/aiohttp-graphql
 cd aiohttp-graphql
 # Create a virtualenv
 python3.6 -m venv env && source env/bin/activate  # for example
@@ -80,4 +85,5 @@ This project is licensed under the MIT License.
   [graphql-python]: https://github.com/graphql-python/graphql-core
   [Apollo-Client]: http://dev.apollodata.com/core/network.html#query-batching
   [Devin Fee]: https://github.com/dfee
-  [aiohttp-graphql]: https://github.com/dfee/aiohttp-graphql
+  [aiohttp-graphql]: https://github.com/graphql-python/aiohttp-graphql
+  [graphql-ws]: https://github.com/graphql-python/graphql-ws

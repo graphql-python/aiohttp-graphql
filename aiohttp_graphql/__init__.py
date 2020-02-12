@@ -1,3 +1,3 @@
 from .graphqlview import GraphQLView
 
-__all__ = ['GraphQLView']
+__all__ = ["GraphQLView"]

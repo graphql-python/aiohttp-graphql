@@ -3,10 +3,9 @@ import re
 
 from aiohttp import web
 
+GRAPHIQL_VERSION = "0.17.5"
 
-GRAPHIQL_VERSION = '0.11.10'
-
-TEMPLATE = '''<!--
+TEMPLATE = """<!--
 The request to this GraphQL server provided the header "Accept: text/html"
 and as a result has been presented GraphiQL - an in-browser IDE for
 exploring GraphQL.
@@ -26,10 +25,12 @@ add "&raw" to the end of the URL within a browser.
   </style>
   <meta name="referrer" content="no-referrer">
   <link href="//cdn.jsdelivr.net/npm/graphiql@{{graphiql_version}}/graphiql.css" rel="stylesheet" />
-  <script src="//cdn.jsdelivr.net/gh/github/fetch@2.0.3/fetch.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/react@16.2.0/umd/react.production.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/react-dom@16.2.0/umd/react-dom.production.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/github/fetch@3.0.0/fetch.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/react@16.12.0/umd/react.production.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/react-dom@16.12.0/umd/react-dom.production.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/graphiql@{{graphiql_version}}/graphiql.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/subscriptions-transport-ws@0.9.16/browser/client.js"></script>
+  <script src="//cdn.jsdelivr.net//npm/graphiql-subscriptions-fetcher@0.0.2/browser/client.js"></script>
 </head>
 <body>
   <script>
@@ -64,6 +65,20 @@ add "&raw" to the end of the URL within a browser.
         otherParams[k] = parameters[k];
       }
     }
+
+    var subscriptionsFetcher;
+    if ('{{subscriptions}}') {
+      const subscriptionsClient = new SubscriptionsTransportWs.SubscriptionClient(
+        '{{ subscriptions }}',
+        {reconnect: true}
+      );
+
+      subscriptionsFetcher = GraphiQLSubscriptionsFetcher.graphQLFetcher(
+        subscriptionsClient,
+        graphQLFetcher
+      );
+    }
+
     var fetchURL = locationQuery(otherParams);
 
     // Defines a GraphQL fetcher using the fetch API.
@@ -111,7 +126,7 @@ add "&raw" to the end of the URL within a browser.
     // Render <GraphiQL /> into the body.
     ReactDOM.render(
       React.createElement(GraphiQL, {
-        fetcher: graphQLFetcher,
+        fetcher: subscriptionsFetcher || graphQLFetcher,
         onEditQuery: onEditQuery,
         onEditVariables: onEditVariables,
         onEditOperationName: onEditOperationName,
@@ -124,25 +139,25 @@ add "&raw" to the end of the URL within a browser.
     );
   </script>
 </body>
-</html>'''
+</html>"""
 
 
 def escape_js_value(value):
     quotation = False
     if value.startswith('"') and value.endswith('"'):
         quotation = True
-        value = value[1:len(value)-1]
+        value = value[1:-1]
 
-    value = value.replace('\\\\n', '\\\\\\n').replace('\\n', '\\\\n')
+    value = value.replace("\\\\n", "\\\\\\n").replace("\\n", "\\\\n")
     if quotation:
-        value = '"' + value.replace('\\\\"', '"').replace('\"', '\\\"') + '"'
+        value = '"' + value.replace('\\\\"', '"').replace('"', '\\"') + '"'
 
     return value
 
 
 def process_var(template, name, value, jsonify=False):
-    pattern = r'{{\s*' + name + r'(\s*|[^}]+)*\s*}}'
-    if jsonify and value not in ['null', 'undefined']:
+    pattern = r"{{\s*" + name + r"(\s*|[^}]+)*\s*}}"
+    if jsonify and value not in ["null", "undefined"]:
         value = json.dumps(value)
         value = escape_js_value(value)
 
@@ -150,33 +165,35 @@ def process_var(template, name, value, jsonify=False):
 
 
 def simple_renderer(template, **values):
-    replace = ['graphiql_version']
-    replace_jsonify = ['query', 'result', 'variables', 'operation_name']
+    replace = ["graphiql_version", "subscriptions"]
+    replace_jsonify = ["query", "result", "variables", "operation_name"]
 
     for rep in replace:
-        template = process_var(template, rep, values.get(rep, ''))
+        template = process_var(template, rep, values.get(rep, ""))
 
     for rep in replace_jsonify:
-        template = process_var(template, rep, values.get(rep, ''), True)
+        template = process_var(template, rep, values.get(rep, ""), True)
 
     return template
 
 
 async def render_graphiql(
-        jinja_env=None,
-        graphiql_version=None,
-        graphiql_template=None,
-        params=None,
-        result=None,
-    ):
+    jinja_env=None,
+    graphiql_version=None,
+    graphiql_template=None,
+    params=None,
+    result=None,
+    subscriptions=None,
+):
     graphiql_version = graphiql_version or GRAPHIQL_VERSION
     template = graphiql_template or TEMPLATE
     template_vars = {
-        'graphiql_version': graphiql_version,
-        'query': params and params.query,
-        'variables': params and params.variables,
-        'operation_name': params and params.operation_name,
-        'result': result,
+        "graphiql_version": graphiql_version,
+        "query": params and params.query,
+        "variables": params and params.variables,
+        "operation_name": params and params.operation_name,
+        "result": result,
+        "subscriptions": subscriptions or "",
     }
 
     if jinja_env:
@@ -188,4 +205,4 @@ async def render_graphiql(
     else:
         source = simple_renderer(template, **template_vars)
 
-    return web.Response(text=source, content_type='text/html')
+    return web.Response(text=source, content_type="text/html")

@@ -67,6 +67,7 @@ confidence=
 # --disable=W"
 disable=
     fixme,
+    bad-continuation,
     missing-docstring,
     too-few-public-methods,
 
@@ -341,14 +342,14 @@ exclude-protected=_asdict,_fields,_replace,_source,_make
 [DESIGN]
 
 # Maximum number of arguments for function / method
-max-args=5
+max-args=6
 
 # Argument names that match this expression will be ignored. Default to name
 # with leading underscore
 ignored-argument-names=_.*
 
 # Maximum number of locals for function / method body
-max-locals=15
+max-locals=18
 
 # Maximum number of return / yield for function / method body
 max-returns=6

@@ -1,2 +1,15 @@
+include MANIFEST.in
+
+include LICENSE
 include README.md
 
+include .flake8
+include .pylintrc
+
+include tox.ini
+include travis.yml
+
+graft aiohttp_graphql
+graft tests
+
+global-exclude *.py[co] __pycache__

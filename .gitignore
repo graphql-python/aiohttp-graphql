@@ -1,13 +1,15 @@
-# Byte-compiled / optimized / DLL files
+# Compiled Python files
 __pycache__/
 *.py[cod]
-*$py.class
-
-# C extensions
-*.so
 
 # Distribution / packaging
 .Python
+venv
+venv3[3-9]
+.venv
+.venv3[3-9]
+env
+.env
 build/
 develop-eggs/
 dist/
@@ -24,6 +26,10 @@ wheels/
 .installed.cfg
 *.egg
 
+# PyInstaller
+*.manifest
+*.spec
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -36,13 +42,15 @@ htmlcov/
 .cache
 coverage.xml
 *.cover
+.pytest_cache/
+.python-version
 
-# Rope project settings
-.ropeproject
+# IntelliJ
+.idea
+*.iml
 
-# Translations
-*.mo
-*.pot
+# Visual Studio
+/.vscode
 
-# Environments
-env
+# OS X
+.DS_Store
