@@ -83,7 +83,7 @@ This project is licensed under the MIT License.
   [Sergey Porivaev]: https://github.com/grazor
   [GraphiQL]: https://github.com/graphql/graphiql
   [graphql-python]: https://github.com/graphql-python/graphql-core
-  [Apollo-Client]: http://dev.apollodata.com/core/network.html#query-batching
+  [Apollo-Client]: https://www.apollographql.com/docs/react/networking/network-layer/#query-batching
   [Devin Fee]: https://github.com/dfee
   [aiohttp-graphql]: https://github.com/graphql-python/aiohttp-graphql
   [graphql-ws]: https://github.com/graphql-python/graphql-ws
