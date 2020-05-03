@@ -30,7 +30,9 @@ setup(
     extras_require={
         "test": [
             "pytest>=5.4,<5.5",
-            "pytest-asyncio>=0.11,<0.12",
+            # Note: tests do not work with pytest-asyncio 0.11, see
+            # https://github.com/pytest-dev/pytest-asyncio/issues/158
+            "pytest-asyncio>=0.10,<0.11",
             "pytest-cov>=2.8,<3",
             "jinja2>=2.11,<3",
             "yarl>1.4,<1.5",
