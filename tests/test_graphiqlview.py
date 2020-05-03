@@ -16,7 +16,7 @@ from .schema import (
 @pytest.fixture
 def pretty_response():
     return (
-        ("{\n" '  "data": {\n' '    "test": "Hello World"\n' "  }\n" "}")
+        "{\n" '  "data": {\n' '    "test": "Hello World"\n' "  }\n" "}"
         .replace('"', '\\"')
         .replace("\n", "\\n")
     )
@@ -82,7 +82,7 @@ async def test_graphiql_get_mutation(client, url_builder):
 async def test_graphiql_get_subscriptions(client, url_builder):
     response = await client.get(
         url_builder(
-            query=("subscription TestSubscriptions { subscriptionsTest { test } }")
+            query="subscription TestSubscriptions { subscriptionsTest { test } }"
         ),
         headers={"Accept": "text/html"},
     )
