@@ -16,9 +16,11 @@ from .schema import (
 @pytest.fixture
 def pretty_response():
     return (
-        "{\n" '  "data": {\n' '    "test": "Hello World"\n' "  }\n" "}"
-        .replace('"', '\\"')
-        .replace("\n", "\\n")
+        "{\n"
+        '  "data": {\n'
+        '    "test": "Hello World"\n'
+        "  }\n"
+        "}".replace('"', '\\"').replace("\n", "\\n")
     )
 
 
