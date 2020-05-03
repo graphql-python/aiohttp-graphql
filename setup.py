@@ -29,10 +29,10 @@ setup(
     ],
     extras_require={
         "test": [
-            "pytest>=5.3,<5.4",
-            "pytest-asyncio>=0.10,<0.11",
+            "pytest>=5.4,<5.5",
+            "pytest-asyncio>=0.11,<0.12",
             "pytest-cov>=2.8,<3",
-            "jinja2>=2.10,<3",
+            "jinja2>=2.11,<3",
             "yarl>1.4,<1.5",
         ],
     },
