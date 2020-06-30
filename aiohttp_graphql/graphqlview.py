@@ -36,7 +36,7 @@ class GraphQLView:  # pylint: disable = too-many-instance-attributes
         error_formatter=None,
         enable_async=True,
         subscriptions=None,
-        **execution_options,
+        **execution_options
     ):
         # pylint: disable=too-many-arguments
 
