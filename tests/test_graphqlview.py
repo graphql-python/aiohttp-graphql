@@ -1,50 +1,40 @@
 import json
-
 from urllib.parse import urlencode
 
 import pytest
-
 from aiohttp import FormData
-from graphql.execution.executors.asyncio import AsyncioExecutor
-from graphql.execution.executors.sync import SyncExecutor
-from aiohttp_graphql import GraphQLView
+from aiohttp.test_utils import TestClient, TestServer
 
-from .schema import Schema, AsyncSchema
-
-
-# pylint: disable=invalid-name
-# pylint: disable=protected-access
+from .app import create_app, url_string
+from .schema import AsyncSchema
 
 
 @pytest.fixture
-def view_kwargs():
-    return {"schema": Schema}
+def app():
+    app = create_app()
+    return app
 
 
-@pytest.mark.parametrize(
-    "view,expected",
-    [
-        (GraphQLView(schema=Schema), False),
-        (GraphQLView(schema=Schema, executor=SyncExecutor()), False),
-        (GraphQLView(schema=Schema, executor=AsyncioExecutor()), True),
-    ],
-)
-def test_eval(view, expected):
-    assert view.enable_async == expected
+@pytest.fixture
+async def client(app):
+    client = TestClient(TestServer(app))
+    await client.start_server()
+    yield client
+    await client.close()
 
 
 @pytest.mark.asyncio
-async def test_allows_get_with_query_param(client, url_builder):
-    response = await client.get(url_builder(query="{test}"))
+async def test_allows_get_with_query_param(client):
+    response = await client.get(url_string(query="{test}"))
 
     assert response.status == 200
     assert await response.json() == {"data": {"test": "Hello World"}}
 
 
 @pytest.mark.asyncio
-async def test_allows_get_with_variable_values(client, url_builder):
+async def test_allows_get_with_variable_values(client):
     response = await client.get(
-        url_builder(
+        url_string(
             query="query helloWho($who: String) { test(who: $who) }",
             variables=json.dumps({"who": "Dolly"}),
         )
@@ -55,9 +45,9 @@ async def test_allows_get_with_variable_values(client, url_builder):
 
 
 @pytest.mark.asyncio
-async def test_allows_get_with_operation_name(client, url_builder):
+async def test_allows_get_with_operation_name(client):
     response = await client.get(
-        url_builder(
+        url_string(
             query="""
         query helloYou { test(who: "You"), ...shared }
         query helloWorld { test(who: "World"), ...shared }
@@ -77,28 +67,30 @@ async def test_allows_get_with_operation_name(client, url_builder):
 
 
 @pytest.mark.asyncio
-async def test_reports_validation_errors(client, url_builder):
-    response = await client.get(url_builder(query="{ test, unknownOne, unknownTwo }"))
+async def test_reports_validation_errors(client):
+    response = await client.get(url_string(query="{ test, unknownOne, unknownTwo }"))
 
     assert response.status == 400
     assert await response.json() == {
         "errors": [
             {
-                "message": 'Cannot query field "unknownOne" on type "QueryRoot".',
+                "message": "Cannot query field 'unknownOne' on type 'QueryRoot'.",
                 "locations": [{"line": 1, "column": 9}],
+                "path": None,
             },
             {
-                "message": 'Cannot query field "unknownTwo" on type "QueryRoot".',
+                "message": "Cannot query field 'unknownTwo' on type 'QueryRoot'.",
                 "locations": [{"line": 1, "column": 21}],
+                "path": None,
             },
         ],
     }
 
 
 @pytest.mark.asyncio
-async def test_errors_when_missing_operation_name(client, url_builder):
+async def test_errors_when_missing_operation_name(client):
     response = await client.get(
-        url_builder(
+        url_string(
             query="""
         query TestQuery { test }
         mutation TestMutation { writeTest { test } }
@@ -115,15 +107,17 @@ async def test_errors_when_missing_operation_name(client, url_builder):
                     "Must provide operation name if query contains multiple "
                     "operations."
                 ),
+                "locations": None,
+                "path": None,
             },
         ]
     }
 
 
 @pytest.mark.asyncio
-async def test_errors_when_sending_a_mutation_via_get(client, url_builder):
+async def test_errors_when_sending_a_mutation_via_get(client):
     response = await client.get(
-        url_builder(
+        url_string(
             query="""
         mutation TestMutation { writeTest { test } }
         """
@@ -132,15 +126,19 @@ async def test_errors_when_sending_a_mutation_via_get(client, url_builder):
     assert response.status == 405
     assert await response.json() == {
         "errors": [
-            {"message": "Can only perform a mutation operation from a POST request."},
+            {
+                "message": "Can only perform a mutation operation from a POST request.",
+                "locations": None,
+                "path": None,
+            },
         ],
     }
 
 
 @pytest.mark.asyncio
-async def test_errors_when_selecting_a_mutation_within_a_get(client, url_builder):
+async def test_errors_when_selecting_a_mutation_within_a_get(client):
     response = await client.get(
-        url_builder(
+        url_string(
             query="""
         query TestQuery { test }
         mutation TestMutation { writeTest { test } }
@@ -152,17 +150,19 @@ async def test_errors_when_selecting_a_mutation_within_a_get(client, url_builder
     assert response.status == 405
     assert await response.json() == {
         "errors": [
-            {"message": "Can only perform a mutation operation from a POST request."},
+            {
+                "message": "Can only perform a mutation operation from a POST request.",
+                "locations": None,
+                "path": None,
+            },
         ],
     }
 
 
 @pytest.mark.asyncio
-async def test_errors_when_selecting_a_subscription_within_a_get(
-    client, url_builder,
-):
+async def test_errors_when_selecting_a_subscription_within_a_get(client):
     response = await client.get(
-        url_builder(
+        url_string(
             query="""
         subscription TestSubscriptions { subscriptionsTest { test } }
         """,
@@ -174,18 +174,19 @@ async def test_errors_when_selecting_a_subscription_within_a_get(
     assert await response.json() == {
         "errors": [
             {
-                "message": (
-                    "Can only perform a subscription operation from a POST " "request."
-                )
+                "message": "Can only perform a subscription operation from a POST "
+                "request.",
+                "locations": None,
+                "path": None,
             },
         ],
     }
 
 
 @pytest.mark.asyncio
-async def test_allows_mutation_to_exist_within_a_get(client, url_builder):
+async def test_allows_mutation_to_exist_within_a_get(client):
     response = await client.get(
-        url_builder(
+        url_string(
             query="""
         query TestQuery { test }
         mutation TestMutation { writeTest { test } }
@@ -199,9 +200,9 @@ async def test_allows_mutation_to_exist_within_a_get(client, url_builder):
 
 
 @pytest.mark.asyncio
-async def test_allows_post_with_json_encoding(client, base_url):
+async def test_allows_post_with_json_encoding(client):
     response = await client.post(
-        base_url,
+        "/graphql",
         data=json.dumps(dict(query="{test}")),
         headers={"content-type": "application/json"},
     )
@@ -211,9 +212,9 @@ async def test_allows_post_with_json_encoding(client, base_url):
 
 
 @pytest.mark.asyncio
-async def test_allows_sending_a_mutation_via_post(client, base_url):
+async def test_allows_sending_a_mutation_via_post(client):
     response = await client.post(
-        base_url,
+        "/graphql",
         data=json.dumps(dict(query="mutation TestMutation { writeTest { test } }",)),
         headers={"content-type": "application/json"},
     )
@@ -223,38 +224,11 @@ async def test_allows_sending_a_mutation_via_post(client, base_url):
 
 
 @pytest.mark.asyncio
-async def test_errors_when_sending_a_subscription_without_allow(client, base_url):
-    response = await client.post(
-        base_url,
-        data=json.dumps(
-            dict(
-                query="""
-            subscription TestSubscriptions { subscriptionsTest { test } }
-            """,
-            )
-        ),
-        headers={"content-type": "application/json"},
-    )
-
-    assert response.status == 200
-    assert await response.json() == {
-        "data": None,
-        "errors": [
-            {
-                "message": "Subscriptions are not allowed. You will need to "
-                "either use the subscribe function or pass "
-                "allow_subscriptions=True"
-            },
-        ],
-    }
-
-
-@pytest.mark.asyncio
-async def test_allows_post_with_url_encoding(client, base_url):
+async def test_allows_post_with_url_encoding(client):
     data = FormData()
     data.add_field("query", "{test}")
     response = await client.post(
-        base_url,
+        "/graphql",
         data=data(),
         headers={"content-type": "application/x-www-form-urlencoded"},
     )
@@ -264,9 +238,9 @@ async def test_allows_post_with_url_encoding(client, base_url):
 
 
 @pytest.mark.asyncio
-async def test_supports_post_json_query_with_string_variables(client, base_url):
+async def test_supports_post_json_query_with_string_variables(client):
     response = await client.post(
-        base_url,
+        "/graphql",
         data=json.dumps(
             dict(
                 query="query helloWho($who: String){ test(who: $who) }",
@@ -281,9 +255,9 @@ async def test_supports_post_json_query_with_string_variables(client, base_url):
 
 
 @pytest.mark.asyncio
-async def test_supports_post_json_query_with_json_variables(client, base_url):
+async def test_supports_post_json_query_with_json_variables(client):
     response = await client.post(
-        base_url,
+        "/graphql",
         data=json.dumps(
             dict(
                 query="query helloWho($who: String){ test(who: $who) }",
@@ -298,9 +272,9 @@ async def test_supports_post_json_query_with_json_variables(client, base_url):
 
 
 @pytest.mark.asyncio
-async def test_supports_post_url_encoded_query_with_string_variables(client, base_url):
+async def test_supports_post_url_encoded_query_with_string_variables(client):
     response = await client.post(
-        base_url,
+        "/graphql",
         data=urlencode(
             dict(
                 query="query helloWho($who: String){ test(who: $who) }",
@@ -315,9 +289,9 @@ async def test_supports_post_url_encoded_query_with_string_variables(client, bas
 
 
 @pytest.mark.asyncio
-async def test_supports_post_json_quey_with_get_variable_values(client, url_builder):
+async def test_supports_post_json_quey_with_get_variable_values(client):
     response = await client.post(
-        url_builder(variables=json.dumps({"who": "Dolly"})),
+        url_string(variables=json.dumps({"who": "Dolly"})),
         data=json.dumps(dict(query="query helloWho($who: String){ test(who: $who) }",)),
         headers={"content-type": "application/json"},
     )
@@ -327,9 +301,9 @@ async def test_supports_post_json_quey_with_get_variable_values(client, url_buil
 
 
 @pytest.mark.asyncio
-async def test_post_url_encoded_query_with_get_variable_values(client, url_builder):
+async def test_post_url_encoded_query_with_get_variable_values(client):
     response = await client.post(
-        url_builder(variables=json.dumps({"who": "Dolly"})),
+        url_string(variables=json.dumps({"who": "Dolly"})),
         data=urlencode(dict(query="query helloWho($who: String){ test(who: $who) }",)),
         headers={"content-type": "application/x-www-form-urlencoded"},
     )
@@ -339,11 +313,9 @@ async def test_post_url_encoded_query_with_get_variable_values(client, url_build
 
 
 @pytest.mark.asyncio
-async def test_supports_post_raw_text_query_with_get_variable_values(
-    client, url_builder
-):
+async def test_supports_post_raw_text_query_with_get_variable_values(client):
     response = await client.post(
-        url_builder(variables=json.dumps({"who": "Dolly"})),
+        url_string(variables=json.dumps({"who": "Dolly"})),
         data="query helloWho($who: String){ test(who: $who) }",
         headers={"content-type": "application/graphql"},
     )
@@ -353,9 +325,9 @@ async def test_supports_post_raw_text_query_with_get_variable_values(
 
 
 @pytest.mark.asyncio
-async def test_allows_post_with_operation_name(client, base_url):
+async def test_allows_post_with_operation_name(client):
     response = await client.post(
-        base_url,
+        "/graphql",
         data=json.dumps(
             dict(
                 query="""
@@ -379,9 +351,9 @@ async def test_allows_post_with_operation_name(client, base_url):
 
 
 @pytest.mark.asyncio
-async def test_allows_post_with_get_operation_name(client, url_builder):
+async def test_allows_post_with_get_operation_name(client):
     response = await client.post(
-        url_builder(operationName="helloWorld"),
+        url_string(operationName="helloWorld"),
         data="""
         query helloYou { test(who: "You"), ...shared }
         query helloWorld { test(who: "World"), ...shared }
@@ -400,23 +372,23 @@ async def test_allows_post_with_get_operation_name(client, url_builder):
 
 
 @pytest.mark.asyncio
-async def test_supports_pretty_printing(client, url_builder):
-    response = await client.get(url_builder(query="{test}", pretty="1"))
+async def test_supports_pretty_printing(client):
+    response = await client.get(url_string(query="{test}", pretty="1"))
 
     text = await response.text()
-    assert text == ("{\n" '  "data": {\n' '    "test": "Hello World"\n' "  }\n" "}")
+    assert text == "{\n" '  "data": {\n' '    "test": "Hello World"\n' "  }\n" "}"
 
 
 @pytest.mark.asyncio
-async def test_not_pretty_by_default(client, url_builder):
-    response = await client.get(url_builder(query="{test}"))
+async def test_not_pretty_by_default(client):
+    response = await client.get(url_string(query="{test}"))
 
-    assert await response.text() == ('{"data":{"test":"Hello World"}}')
+    assert await response.text() == '{"data":{"test":"Hello World"}}'
 
 
 @pytest.mark.asyncio
-async def test_supports_pretty_printing_by_request(client, url_builder):
-    response = await client.get(url_builder(query="{test}", pretty="1"))
+async def test_supports_pretty_printing_by_request(client):
+    response = await client.get(url_string(query="{test}", pretty="1"))
 
     assert await response.text() == (
         "{\n" '  "data": {\n' '    "test": "Hello World"\n' "  }\n" "}"
@@ -424,8 +396,8 @@ async def test_supports_pretty_printing_by_request(client, url_builder):
 
 
 @pytest.mark.asyncio
-async def test_handles_field_errors_caught_by_graphql(client, url_builder):
-    response = await client.get(url_builder(query="{thrower}"))
+async def test_handles_field_errors_caught_by_graphql(client):
+    response = await client.get(url_string(query="{thrower}"))
     assert response.status == 200
     assert await response.json() == {
         "data": None,
@@ -440,96 +412,119 @@ async def test_handles_field_errors_caught_by_graphql(client, url_builder):
 
 
 @pytest.mark.asyncio
-async def test_handles_syntax_errors_caught_by_graphql(client, url_builder):
-    response = await client.get(url_builder(query="syntaxerror"))
+async def test_handles_syntax_errors_caught_by_graphql(client):
+    response = await client.get(url_string(query="syntaxerror"))
 
     assert response.status == 400
     assert await response.json() == {
         "errors": [
             {
                 "locations": [{"column": 1, "line": 1}],
-                "message": (
-                    "Syntax Error GraphQL (1:1) "
-                    'Unexpected Name "syntaxerror"\n\n1: syntaxerror\n   ^\n'
-                ),
+                "message": "Syntax Error: Unexpected Name 'syntaxerror'.",
+                "path": None,
             },
         ],
     }
 
 
 @pytest.mark.asyncio
-async def test_handles_errors_caused_by_a_lack_of_query(client, base_url):
-    response = await client.get(base_url)
+async def test_handles_errors_caused_by_a_lack_of_query(client):
+    response = await client.get("/graphql")
 
     assert response.status == 400
     assert await response.json() == {
-        "errors": [{"message": "Must provide query string."}]
+        "errors": [
+            {"message": "Must provide query string.", "locations": None, "path": None}
+        ]
     }
 
 
 @pytest.mark.asyncio
-async def test_handles_batch_correctly_if_is_disabled(client, base_url):
+async def test_handles_batch_correctly_if_is_disabled(client):
     response = await client.post(
-        base_url, data="[]", headers={"content-type": "application/json"},
+        "/graphql", data="[]", headers={"content-type": "application/json"},
     )
 
     assert response.status == 400
     assert await response.json() == {
-        "errors": [{"message": "Batch GraphQL requests are not enabled."}]
+        "errors": [
+            {
+                "message": "Batch GraphQL requests are not enabled.",
+                "locations": None,
+                "path": None,
+            }
+        ]
     }
 
 
 @pytest.mark.asyncio
-async def test_handles_incomplete_json_bodies(client, base_url):
+async def test_handles_incomplete_json_bodies(client):
     response = await client.post(
-        base_url, data='{"query":', headers={"content-type": "application/json"},
+        "/graphql", data='{"query":', headers={"content-type": "application/json"},
     )
 
     assert response.status == 400
     assert await response.json() == {
-        "errors": [{"message": "POST body sent invalid JSON."}]
+        "errors": [
+            {
+                "message": "POST body sent invalid JSON.",
+                "locations": None,
+                "path": None,
+            }
+        ]
     }
 
 
 @pytest.mark.asyncio
-async def test_handles_plain_post_text(client, url_builder):
+async def test_handles_plain_post_text(client):
     response = await client.post(
-        url_builder(variables=json.dumps({"who": "Dolly"})),
+        url_string(variables=json.dumps({"who": "Dolly"})),
         data="query helloWho($who: String){ test(who: $who) }",
         headers={"content-type": "text/plain"},
     )
     assert response.status == 400
     assert await response.json() == {
-        "errors": [{"message": "Must provide query string."}]
+        "errors": [
+            {"message": "Must provide query string.", "locations": None, "path": None}
+        ]
     }
 
 
 @pytest.mark.asyncio
-async def test_handles_poorly_formed_variables(client, url_builder):
+async def test_handles_poorly_formed_variables(client):
     response = await client.get(
-        url_builder(
+        url_string(
             query="query helloWho($who: String){ test(who: $who) }", variables="who:You"
         ),
     )
     assert response.status == 400
     assert await response.json() == {
-        "errors": [{"message": "Variables are invalid JSON."}]
+        "errors": [
+            {"message": "Variables are invalid JSON.", "locations": None, "path": None}
+        ]
     }
 
 
 @pytest.mark.asyncio
-async def test_handles_unsupported_http_methods(client, url_builder):
-    response = await client.put(url_builder(query="{test}"))
+async def test_handles_unsupported_http_methods(client):
+    response = await client.put(url_string(query="{test}"))
     assert response.status == 405
     assert response.headers["Allow"] in ["GET, POST", "HEAD, GET, POST, OPTIONS"]
     assert await response.json() == {
-        "errors": [{"message": "GraphQL only supports GET and POST requests."}]
+        "errors": [
+            {
+                "message": "GraphQL only supports GET and POST requests.",
+                "locations": None,
+                "path": None,
+            }
+        ]
     }
 
 
 @pytest.mark.asyncio
-async def test_passes_request_into_request_context(client, url_builder):
-    response = await client.get(url_builder(query="{request}", q="testing"))
+@pytest.mark.parametrize("app", [create_app()])
+async def test_passes_request_into_request_context(app, client):
+    response = await client.get(url_string(query="{request}", q="testing"))
 
     assert response.status == 200
     assert await response.json() == {
@@ -537,45 +532,46 @@ async def test_passes_request_into_request_context(client, url_builder):
     }
 
 
-class TestCustomContext:
-    @pytest.fixture
-    def view_kwargs(self, request, view_kwargs):
-        # pylint: disable=no-self-use
-        # pylint: disable=redefined-outer-name
-        view_kwargs.update(context=request.param)
-        return view_kwargs
+@pytest.mark.asyncio
+@pytest.mark.parametrize("app", [create_app(context={"session": "CUSTOM CONTEXT"})])
+async def test_passes_custom_context_into_context(app, client):
+    response = await client.get(url_string(query="{context { session request }}"))
 
-    @pytest.mark.parametrize(
-        "view_kwargs",
-        ["CUSTOM CONTEXT", {"CUSTOM_CONTEXT": "test"}],
-        indirect=True,
-        ids=repr,
-    )
-    @pytest.mark.asyncio
-    async def test_context_remapped(self, client, url_builder):
-        response = await client.get(url_builder(query="{context}"))
-
-        _json = await response.json()
-        assert response.status == 200
-        assert "request" in _json["data"]["context"]
-        assert "CUSTOM CONTEXT" not in _json["data"]["context"]
-
-    @pytest.mark.parametrize(
-        "view_kwargs", [{"request": "test"}], indirect=True, ids=repr
-    )
-    @pytest.mark.asyncio
-    async def test_request_not_replaced(self, client, url_builder):
-        response = await client.get(url_builder(query="{context}"))
-
-        _json = await response.json()
-        assert response.status == 200
-        assert "request" in _json["data"]["context"]
-        assert _json["data"]["context"] == str({"request": "test"})
+    _json = await response.json()
+    assert response.status == 200
+    assert "data" in _json
+    assert "session" in _json["data"]["context"]
+    assert "request" in _json["data"]["context"]
+    assert "CUSTOM CONTEXT" in _json["data"]["context"]["session"]
+    assert "Request" in _json["data"]["context"]["request"]
 
 
 @pytest.mark.asyncio
-async def test_post_multipart_data(client, base_url):
-    # pylint: disable=line-too-long
+@pytest.mark.parametrize("app", [create_app(context="CUSTOM CONTEXT")])
+async def test_context_remapped_if_not_mapping(app, client):
+    response = await client.get(url_string(query="{context { session request }}"))
+
+    _json = await response.json()
+    assert response.status == 200
+    assert "data" in _json
+    assert "session" in _json["data"]["context"]
+    assert "request" in _json["data"]["context"]
+    assert "CUSTOM CONTEXT" not in _json["data"]["context"]["request"]
+    assert "Request" in _json["data"]["context"]["request"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("app", [create_app(context={"request": "test"})])
+async def test_request_not_replaced(app, client):
+    response = await client.get(url_string(query="{context { request }}"))
+
+    _json = await response.json()
+    assert response.status == 200
+    assert _json["data"]["context"]["request"] == "test"
+
+
+@pytest.mark.asyncio
+async def test_post_multipart_data(client):
     query = "mutation TestMutation { writeTest { test } }"
 
     data = (
@@ -586,14 +582,14 @@ async def test_post_multipart_data(client, base_url):
         + "\r\n"
         + "------aiohttpgraphql--\r\n"
         + "Content-Type: text/plain; charset=utf-8\r\n"
-        + 'Content-Disposition: form-data; name="file"; filename="text1.txt"; filename*=utf-8\'\'text1.txt\r\n'
+        + 'Content-Disposition: form-data; name="file"; filename="text1.txt"; filename*=utf-8\'\'text1.txt\r\n'  # noqa: ignore
         + "\r\n"
         + "\r\n"
         + "------aiohttpgraphql--\r\n"
     )
 
     response = await client.post(
-        base_url,
+        "/graphql",
         data=data,
         headers={"content-type": "multipart/form-data; boundary=----aiohttpgraphql"},
     )
@@ -602,110 +598,92 @@ async def test_post_multipart_data(client, base_url):
     assert await response.json() == {"data": {u"writeTest": {u"test": u"Hello World"}}}
 
 
-class TestBatchExecutor:
-    @pytest.fixture
-    def view_kwargs(self, view_kwargs):
-        # pylint: disable=no-self-use
-        # pylint: disable=redefined-outer-name
-        view_kwargs.update(batch=True)
-        return view_kwargs
+@pytest.mark.asyncio
+@pytest.mark.parametrize("app", [create_app(batch=True)])
+async def test_batch_allows_post_with_json_encoding(app, client):
+    response = await client.post(
+        "/graphql",
+        data=json.dumps([dict(id=1, query="{test}")]),
+        headers={"content-type": "application/json"},
+    )
 
-    @pytest.mark.asyncio
-    async def test_batch_allows_post_with_json_encoding(self, client, base_url):
-        response = await client.post(
-            base_url,
-            data=json.dumps([dict(id=1, query="{test}")]),
-            headers={"content-type": "application/json"},
-        )
-
-        assert response.status == 200
-        assert await response.json() == [{"data": {"test": "Hello World"}}]
-
-    @pytest.mark.asyncio
-    async def test_batch_supports_post_json_query_with_json_variables(
-        self, client, base_url
-    ):
-        response = await client.post(
-            base_url,
-            data=json.dumps(
-                [
-                    dict(
-                        id=1,
-                        query="query helloWho($who: String){ test(who: $who) }",
-                        variables={"who": "Dolly"},
-                    )
-                ]
-            ),
-            headers={"content-type": "application/json"},
-        )
-
-        assert response.status == 200
-        assert await response.json() == [{"data": {"test": "Hello Dolly"}}]
-
-    @pytest.mark.asyncio
-    async def test_batch_allows_post_with_operation_name(self, client, base_url):
-        response = await client.post(
-            base_url,
-            data=json.dumps(
-                [
-                    dict(
-                        id=1,
-                        query="""
-                query helloYou { test(who: "You"), ...shared }
-                query helloWorld { test(who: "World"), ...shared }
-                query helloDolly { test(who: "Dolly"), ...shared }
-                fragment shared on QueryRoot {
-                  shared: test(who: "Everyone")
-                }
-                """,
-                        operationName="helloWorld",
-                    )
-                ]
-            ),
-            headers={"content-type": "application/json"},
-        )
-
-        assert response.status == 200
-        assert await response.json() == [
-            {"data": {"test": "Hello World", "shared": "Hello Everyone"}}
-        ]
-
-
-class TestAsyncSchema:
-    @pytest.fixture
-    def executor(self, event_loop):
-        # pylint: disable=no-self-use
-        # Only need to test with the AsyncExecutor
-        return AsyncioExecutor(loop=event_loop)
-
-    @pytest.fixture
-    def view_kwargs(self, view_kwargs):
-        # pylint: disable=no-self-use
-        # pylint: disable=redefined-outer-name
-        view_kwargs.update(schema=AsyncSchema)
-        return view_kwargs
-
-    @pytest.mark.asyncio
-    async def test_async_schema(self, client, url_builder):
-        response = await client.get(url_builder(query="{a,b,c}"))
-
-        assert response.status == 200
-        assert await response.json() == {"data": {"a": "hey", "b": "hey2", "c": "hey3"}}
+    assert response.status == 200
+    assert await response.json() == [{"data": {"test": "Hello World"}}]
 
 
 @pytest.mark.asyncio
-async def test_preflight_request(client, base_url):
+@pytest.mark.parametrize("app", [create_app(batch=True)])
+async def test_batch_supports_post_json_query_with_json_variables(app, client):
+    response = await client.post(
+        "/graphql",
+        data=json.dumps(
+            [
+                dict(
+                    id=1,
+                    query="query helloWho($who: String){ test(who: $who) }",
+                    variables={"who": "Dolly"},
+                )
+            ]
+        ),
+        headers={"content-type": "application/json"},
+    )
+
+    assert response.status == 200
+    assert await response.json() == [{"data": {"test": "Hello Dolly"}}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("app", [create_app(batch=True)])
+async def test_batch_allows_post_with_operation_name(app, client):
+    response = await client.post(
+        "/graphql",
+        data=json.dumps(
+            [
+                dict(
+                    id=1,
+                    query="""
+            query helloYou { test(who: "You"), ...shared }
+            query helloWorld { test(who: "World"), ...shared }
+            query helloDolly { test(who: "Dolly"), ...shared }
+            fragment shared on QueryRoot {
+              shared: test(who: "Everyone")
+            }
+            """,
+                    operationName="helloWorld",
+                )
+            ]
+        ),
+        headers={"content-type": "application/json"},
+    )
+
+    assert response.status == 200
+    assert await response.json() == [
+        {"data": {"test": "Hello World", "shared": "Hello Everyone"}}
+    ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("app", [create_app(schema=AsyncSchema, enable_async=True)])
+async def test_async_schema(app, client):
+    response = await client.get(url_string(query="{a,b,c}"))
+
+    assert response.status == 200
+    assert await response.json() == {"data": {"a": "hey", "b": "hey2", "c": "hey3"}}
+
+
+@pytest.mark.asyncio
+async def test_preflight_request(client):
     response = await client.options(
-        base_url, headers={"Access-Control-Request-Method": "POST"},
+        "/graphql", headers={"Access-Control-Request-Method": "POST"},
     )
 
     assert response.status == 200
 
 
 @pytest.mark.asyncio
-async def test_preflight_incorrect_request(client, base_url):
+async def test_preflight_incorrect_request(client):
     response = await client.options(
-        base_url, headers={"Access-Control-Request-Method": "OPTIONS"},
+        "/graphql", headers={"Access-Control-Request-Method": "OPTIONS"},
     )
 
     assert response.status == 400

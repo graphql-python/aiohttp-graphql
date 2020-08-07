@@ -1,10 +1,30 @@
 from setuptools import setup, find_packages
 
+install_requires = [
+    "graphql-server[aiohttp]>=3.0.0b1",
+]
+
+tests_requires = [
+    "pytest>=5.4,<5.5",
+    "pytest-asyncio>=0.11.0",
+    "pytest-cov>=2.8,<3",
+    "Jinja2>=2.10.1,<3",
+]
+
+dev_requires = [
+    "flake8>=3.7,<4",
+    "isort>=4,<5",
+    "check-manifest>=0.40,<1",
+] + tests_requires
+
+with open("README.md", encoding="utf-8") as readme_file:
+    readme = readme_file.read()
+
 setup(
     name="aiohttp-graphql",
     version="1.1.0",
     description="Adds GraphQL support to your aiohttp application",
-    long_description=open("README.md").read(),
+    long_description=readme,
     long_description_content_type="text/markdown",
     url="https://github.com/graphql-python/aiohttp-graphql",
     download_url="https://github.com/graphql-python/aiohttp-graphql/releases",
@@ -22,22 +42,13 @@ setup(
     ],
     keywords="api graphql protocol aiohttp",
     packages=find_packages(exclude=["tests"]),
-    install_requires=[
-        "graphql-core>=2.3,<3",
-        "graphql-server-core>=1.2,<2",
-        "aiohttp>=3,<4",
-    ],
+    install_requires=install_requires,
+    tests_require=tests_requires,
     extras_require={
-        "test": [
-            "pytest>=5.4,<5.5",
-            # Note: tests do not work with pytest-asyncio 0.11, see
-            # https://github.com/pytest-dev/pytest-asyncio/issues/158
-            "pytest-asyncio>=0.10,<0.11",
-            "pytest-cov>=2.8,<3",
-            "jinja2>=2.11,<3",
-            "yarl>1.4,<1.5",
-        ],
+        'test': tests_requires,
+        'dev': dev_requires,
     },
     include_package_data=True,
+    zip_safe=False,
     platforms="any",
 )

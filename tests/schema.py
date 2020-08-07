@@ -1,17 +1,12 @@
 import asyncio
 
-from graphql.type.definition import (
-    GraphQLArgument,
-    GraphQLField,
-    GraphQLNonNull,
-    GraphQLObjectType,
-)
+from graphql.type.definition import (GraphQLArgument, GraphQLField,
+                                     GraphQLNonNull, GraphQLObjectType)
 from graphql.type.scalars import GraphQLString
 from graphql.type.schema import GraphQLSchema
 
 
-def resolve_raises(*args):
-    # pylint: disable=unused-argument
+def resolve_raises(*_):
     raise Exception("Throws!")
 
 
@@ -19,22 +14,28 @@ def resolve_raises(*args):
 QueryRootType = GraphQLObjectType(
     name="QueryRoot",
     fields={
-        "thrower": GraphQLField(
-            GraphQLNonNull(GraphQLString), resolver=resolve_raises,
-        ),
+        "thrower": GraphQLField(GraphQLNonNull(GraphQLString), resolve=resolve_raises,),
         "request": GraphQLField(
             GraphQLNonNull(GraphQLString),
-            resolver=lambda obj, info, *args: info.context["request"].query.get("q"),
+            resolve=lambda obj, info, *args: info.context["request"].query.get("q"),
         ),
         "context": GraphQLField(
-            GraphQLNonNull(GraphQLString),
-            resolver=lambda obj, info, *args: info.context,
+            GraphQLObjectType(
+                name="context",
+                fields={
+                    "session": GraphQLField(GraphQLString),
+                    "request": GraphQLField(
+                        GraphQLNonNull(GraphQLString),
+                        resolve=lambda obj, info: info.context["request"],
+                    ),
+                },
+            ),
+            resolve=lambda obj, info: info.context,
         ),
         "test": GraphQLField(
-            type=GraphQLString,
+            type_=GraphQLString,
             args={"who": GraphQLArgument(GraphQLString)},
-            resolver=lambda obj, info, **args: "Hello %s"
-            % (args.get("who") or "World"),
+            resolve=lambda obj, info, who=None: "Hello %s" % (who or "World"),
         ),
     },
 )
@@ -44,7 +45,7 @@ MutationRootType = GraphQLObjectType(
     name="MutationRoot",
     fields={
         "writeTest": GraphQLField(
-            type=QueryRootType, resolver=lambda *args: QueryRootType
+            type_=QueryRootType, resolve=lambda *args: QueryRootType
         )
     },
 )
@@ -53,7 +54,7 @@ SubscriptionsRootType = GraphQLObjectType(
     name="SubscriptionsRoot",
     fields={
         "subscriptionsTest": GraphQLField(
-            type=QueryRootType, resolver=lambda *args: QueryRootType
+            type_=QueryRootType, resolve=lambda *args: QueryRootType
         )
     },
 )
@@ -62,29 +63,26 @@ Schema = GraphQLSchema(QueryRootType, MutationRootType, SubscriptionsRootType)
 
 
 # Schema with async methods
-async def resolver(context, *args):
-    # pylint: disable=unused-argument
+async def resolver_field_async_1(_obj, info):
     await asyncio.sleep(0.001)
     return "hey"
 
 
-async def resolver_2(context, *args):
-    # pylint: disable=unused-argument
+async def resolver_field_async_2(_obj, info):
     await asyncio.sleep(0.003)
     return "hey2"
 
 
-def resolver_3(context, *args):
-    # pylint: disable=unused-argument
+def resolver_field_sync(_obj, info):
     return "hey3"
 
 
 AsyncQueryType = GraphQLObjectType(
     "AsyncQueryType",
     {
-        "a": GraphQLField(GraphQLString, resolver=resolver),
-        "b": GraphQLField(GraphQLString, resolver=resolver_2),
-        "c": GraphQLField(GraphQLString, resolver=resolver_3),
+        "a": GraphQLField(GraphQLString, resolve=resolver_field_async_1),
+        "b": GraphQLField(GraphQLString, resolve=resolver_field_async_2),
+        "c": GraphQLField(GraphQLString, resolve=resolver_field_sync),
     },
 )
 
