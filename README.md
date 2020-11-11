@@ -1,11 +1,26 @@
 # aiohttp-graphql
+
 Adds [GraphQL] support to your [aiohttp] application.
 
 Based on [flask-graphql] by [Syrus Akbary] and [sanic-graphql] by [Sergey Porivaev].
 
-[![PyPI version](https://badge.fury.io/py/aiohttp-graphql.svg)](https://badge.fury.io/py/aiohttp-graphql)
-[![Build Status](https://travis-ci.com/graphql-python/aiohttp-graphql.svg?branch=master)](https://github.com/graphql-python/aiohttp-graphql)
-[![Coverage Status](https://codecov.io/gh/graphql-python/aiohttp-graphql/branch/master/graph/badge.svg)](https://github.com/graphql-python/aiohttp-graphql)
+[![travis][travis-image]][travis-url]
+[![pyversion][pyversion-image]][pyversion-url]
+[![pypi][pypi-image]][pypi-url]
+[![Anaconda-Server Badge][conda-image]][conda-url]
+[![codecov][codecov-image]][codecov-url]
+
+[travis-image]: https://travis-ci.com/graphql-python/aiohttp-graphql.svg?style=flat
+[travis-url]: https://travis-ci.com/graphql-python/aiohttp-graphql/
+[pyversion-image]: https://img.shields.io/pypi/pyversions/aiohttp-graphql
+[pyversion-url]: https://pypi.org/project/aiohttp-graphql/
+[pypi-image]: https://img.shields.io/pypi/v/aiohttp-graphql.svg?style=flat
+[pypi-url]: https://pypi.org/project/aiohttp-graphql/
+[codecov-image]: https://codecov.io/gh/graphql-python/aiohttp-graphql/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/graphql-python/aiohttp-graphql/
+[conda-image]: https://img.shields.io/conda/vn/conda-forge/aiohttp-graphql.svg
+[conda-url]: https://anaconda.org/conda-forge/aiohttp-graphql
+
 
 ## Usage
 
